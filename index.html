@@ -1,0 +1,509 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<meta name="description" content="Suivi de diabète complet GlycoTrack V9.5">
+<meta name="theme-color" content="#4f46e5">
+
+<title>GlycoTrack V9.5 PWA</title>
+
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+
+<link rel="stylesheet" href="css/style.css">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' fill='%234f46e5'/%3E%3Ctext x='50%' y='55' font-size='50' text-anchor='middle' fill='white'%3EG%3C/text%3E%3C/svg%3E">
+
+</head>
+<body>
+
+<div class="toast-container" id="toastContainer"></div>
+
+<div class="top-header">
+  <div class="app-logo"><i class="fa-solid fa-droplet"></i> GlycoTrack</div>
+  <div class="d-flex align-items-center gap-2">
+    <button class="theme-toggle" onclick="toggleTheme()" title="Changer de thème">
+      <i class="fa-solid fa-moon" id="themeIcon"></i>
+    </button>
+    <button class="user-chip" onclick="switchUser()">
+      <i class="fa-solid fa-user-circle"></i> <span id="userName">Chargement...</span>
+    </button>
+  </div>
+</div>
+
+<div id="installPrompt" class="install-prompt" style="display:none; margin: 20px;">
+  <i class="fa-solid fa-download" style="font-size:2rem"></i>
+  <div style="flex:1">
+    <div class="fw-bold">Installer GlycoTrack</div>
+    <div class="small">Accédez rapidement depuis votre écran d'accueil</div>
+  </div>
+  <button onclick="installPWA()">Installer</button>
+  <button onclick="dismissInstall()" style="background:transparent; color:white;">✕</button>
+</div>
+
+<!-- HOME VIEW -->
+<div id="view-home" class="view-section active">
+  <div class="summary-card">
+    <div class="card-title-sm mb-3">Tendance (7 derniers jours)</div>
+    <div style="position:relative; height:220px;">
+      <canvas id="chartHome"></canvas>
+    </div>
+  </div>
+  <div class="row g-3 mb-4">
+    <div class="col-6">
+      <div class="summary-card text-center h-100 d-flex flex-column justify-content-center p-3">
+        <div class="text-muted small fw-bold">MOYENNE</div>
+        <div class="display-6 fw-bold text-primary" id="dashAvg">-</div>
+        <div class="small text-muted">g/L</div>
+      </div>
+    </div>
+    <div class="col-6">
+      <div class="summary-card text-center h-100 d-flex flex-column justify-content-center p-3">
+        <div class="text-muted small fw-bold">DANS LA CIBLE</div>
+        <div class="display-6 fw-bold text-success" id="dashTarget">-</div>
+        <div class="small text-muted">%</div>
+      </div>
+    </div>
+  </div>
+  <div class="d-flex justify-content-between align-items-center mb-3 px-1">
+    <h6 class="fw-bold mb-0 text-secondary">Derniers ajouts</h6>
+    <button class="btn btn-sm btn-outline-primary" onclick="navTo('log')">
+      Voir tout <i class="fa-solid fa-arrow-right ms-1"></i>
+    </button>
+  </div>
+  <div id="recentList"></div>
+</div>
+
+<!-- LOG VIEW -->
+<div id="view-log" class="view-section">
+  <div class="mb-3">
+    <div class="filter-scroll">
+      <button class="filter-chip active" onclick="setFilter(this, 'all')">Tout</button>
+      <button class="filter-chip" onclick="setFilter(this, 'week')">Cette Semaine</button>
+      <button class="filter-chip" onclick="setFilter(this, 'month')">Ce Mois</button>
+      <button class="filter-chip" onclick="setFilter(this, 'hypo')">🚨 Hypos</button>
+      <button class="filter-chip" onclick="setFilter(this, 'hyper')">⚠️ Hypers</button>
+      <button class="filter-chip" onclick="setFilter(this, 'sport')">⚽ Sport</button>
+    </div>
+  </div>
+  <div class="d-flex justify-content-between align-items-center mb-2 px-1">
+    <span class="small fw-bold text-muted" id="countLog">0 entrées</span>
+    <div class="d-flex gap-2">
+      <button class="btn btn-sm text-primary fw-bold" onclick="exportExcel()"><i class="fa-solid fa-file-excel"></i></button>
+      <button class="btn btn-sm text-danger fw-bold" onclick="exportPDF()"><i class="fa-solid fa-file-pdf"></i></button>
+    </div>
+  </div>
+  <div id="fullList"></div>
+</div>
+
+<!-- STATS VIEW — DASHBOARD PRO -->
+<div id="view-stats" class="view-section">
+  <h5 class="fw-bold mb-3">Tableau de bord avancé</h5>
+
+  <div class="row g-3 mb-3">
+    <div class="col-12 col-md-6">
+      <div class="med-panel">
+        <div class="d-flex justify-content-between align-items-center mb-2">
+          <div>
+            <div class="small text-muted">Moyennes glissantes</div>
+            <div class="h5 fw-bold">7 / 14 / 30 jours</div>
+          </div>
+        </div>
+        <div class="d-flex gap-3">
+          <div class="text-center">
+            <div class="small text-muted">7j</div>
+            <div class="h4 fw-bold" id="avg7">—</div>
+          </div>
+          <div class="text-center">
+            <div class="small text-muted">14j</div>
+            <div class="h4 fw-bold" id="avg14">—</div>
+          </div>
+          <div class="text-center">
+            <div class="small text-muted">30j</div>
+            <div class="h4 fw-bold" id="avg30">—</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="med-panel mt-3">
+        <div class="small text-muted">Tendance & Stabilité</div>
+        <div class="d-flex align-items-center justify-content-between mt-2">
+          <div>
+            <div class="fw-bold h4" id="trendSymbol">→</div>
+            <div class="small text-muted">Tendance (10 dernières)</div>
+          </div>
+          <div>
+            <div class="small text-muted">Écart-type (7j)</div>
+            <div class="fw-bold" id="sd7">—</div>
+            <div class="small text-muted mt-2">Écart-type (30j)</div>
+            <div class="fw-bold" id="sd30">—</div>
+          </div>
+          <div>
+            <div class="small text-muted">Score GlycoTrack</div>
+            <div class="h4 fw-bold" id="glyScore">—</div>
+            <div class="small text-muted">Est. A1c</div>
+            <div class="fw-bold" id="estA1c">—</div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <div class="col-12 col-md-6">
+      <div class="med-panel">
+        <div class="small text-muted">Répartition (30j)</div>
+        <div class="d-flex gap-2 align-items-center mt-2">
+          <div class="text-center" style="flex:1">
+            <div class="h5 fw-bold" id="hypoPct">—</div>
+            <div class="small text-muted">Hypo &lt;0.70</div>
+          </div>
+          <div class="text-center" style="flex:1">
+            <div class="h5 fw-bold" id="targetPct">—</div>
+            <div class="small text-muted">Cible 0.70–1.80</div>
+          </div>
+          <div class="text-center" style="flex:1">
+            <div class="h5 fw-bold" id="hyperPct">—</div>
+            <div class="small text-muted">Hyper &gt;1.80</div>
+          </div>
+        </div>
+        <div class="mt-3">
+          <canvas id="chartAdvanced" style="height:160px"></canvas>
+        </div>
+      </div>
+
+      <div class="med-panel mt-3">
+        <div class="small text-muted">Moyenne par période</div>
+        <div class="d-flex justify-content-between mt-2">
+          <div class="text-center"><div class="small text-muted">Matin</div><div class="fw-bold" id="avgTimeMatin">—</div></div>
+          <div class="text-center"><div class="small text-muted">Midi</div><div class="fw-bold" id="avgTimeMidi">—</div></div>
+          <div class="text-center"><div class="small text-muted">Soir</div><div class="fw-bold" id="avgTimeSoir">—</div></div>
+          <div class="text-center"><div class="small text-muted">Nuit</div><div class="fw-bold" id="avgTimeNuit">—</div></div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <div class="row g-3">
+    <div class="col-12 col-md-6">
+      <div class="med-panel">
+        <div class="small text-muted">Par catégorie (Matin / Midi / Soir / Divers)</div>
+        <div class="d-flex gap-3 mt-2">
+          <div class="text-center"><div class="small text-muted">Matin</div><div class="fw-bold" id="avgCatMatin">—</div></div>
+          <div class="text-center"><div class="small text-muted">Midi</div><div class="fw-bold" id="avgCatMidi">—</div></div>
+          <div class="text-center"><div class="small text-muted">Soir</div><div class="fw-bold" id="avgCatSoir">—</div></div>
+          <div class="text-center"><div class="small text-muted">Divers</div><div class="fw-bold" id="avgCatDivers">—</div></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-12 col-md-6">
+      <div class="med-panel">
+        <div class="small text-muted">Min / Max</div>
+        <div class="d-flex gap-3 mt-2">
+          <div class="text-center"><div class="small text-muted">Min (7j)</div><div class="fw-bold" id="min7">—</div></div>
+          <div class="text-center"><div class="small text-muted">Max (7j)</div><div class="fw-bold" id="max7">—</div></div>
+          <div class="text-center"><div class="small text-muted">Min (30j)</div><div class="fw-bold" id="min30">—</div></div>
+          <div class="text-center"><div class="small text-muted">Max (30j)</div><div class="fw-bold" id="max30">—</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+
+<!-- SETTINGS VIEW -->
+<div id="view-settings" class="view-section">
+  <h5 class="fw-bold mb-4"><i class="fa-solid fa-gear me-2"></i> Paramètres</h5>
+  
+  <div class="settings-section">
+    <div class="card-title-sm">APPARENCE</div>
+    <div class="settings-item">
+      <div>
+        <div class="fw-bold">Thème sombre</div>
+        <div class="small text-muted">Mode nuit automatique</div>
+      </div>
+      <label class="switch">
+        <input type="checkbox" id="darkModeSwitch" onchange="toggleTheme()">
+        <span class="slider"></span>
+      </label>
+    </div>
+  </div>
+
+  <div class="settings-section">
+    <div class="card-title-sm">NOMS DES MÉDICAMENTS</div>
+    <div class="settings-item">
+      <div>
+        <div class="fw-bold">Insulines Rapide/Lente</div>
+        <div class="small text-muted">Modifier Novorapid et Lantus</div>
+      </div>
+      <button class="btn btn-sm btn-outline-primary" onclick="updateInsulinNames()">Modifier</button>
+    </div>
+    <div class="settings-item">
+      <div>
+        <div class="fw-bold">Médicaments des repas</div>
+        <div class="small text-muted">Gérer les médicaments par repas (Matin/Midi/Soir/Divers)</div>
+      </div>
+      <button class="btn btn-sm btn-outline-primary" onclick="navTo('log'); setTimeout(()=>window.openNewEntryModal('Matin'),250)">Gérer</button>
+    </div>
+  </div>
+
+  <div class="settings-section">
+    <div class="card-title-sm">NOTIFICATIONS</div>
+    <div class="settings-item">
+      <div>
+        <div class="fw-bold">Rappels quotidiens</div>
+        <div class="small text-muted">Saisir vos glycémies</div>
+      </div>
+      <label class="switch">
+        <input type="checkbox" id="notifSwitch" onchange="toggleNotifications()">
+        <span class="slider"></span>
+      </label>
+    </div>
+    <div class="settings-item">
+      <div>
+        <div class="fw-bold">Heure de rappel</div>
+        <div class="small text-muted">Matin: 08:00 | Soir: 20:00</div>
+      </div>
+      <button class="btn btn-sm btn-outline-primary" onclick="setNotificationTime()">Modifier</button>
+    </div>
+  </div>
+
+  <div class="settings-section">
+    <div class="card-title-sm">DONNÉES</div>
+    <div class="settings-item">
+      <div>
+        <div class="fw-bold">Sauvegarder les données</div>
+        <div class="small text-muted">Télécharger backup JSON</div>
+      </div>
+      <button class="btn btn-sm btn-primary" onclick="backupData()">
+        <i class="fa-solid fa-download"></i>
+      </button>
+    </div>
+    <div class="settings-item">
+      <div>
+        <div class="fw-bold">Importer backup</div>
+        <div class="small text-muted">Restaurer depuis fichier</div>
+      </div>
+      <button class="btn btn-sm btn-success" onclick="importBackup()">
+        <i class="fa-solid fa-upload"></i>
+      </button>
+    </div>
+    <div class="settings-item">
+      <div>
+        <div class="fw-bold text-danger">Supprimer toutes les données</div>
+        <div class="small text-muted">Action irréversible</div>
+      </div>
+      <button class="btn btn-sm btn-danger" onclick="deleteAllData()">
+        <i class="fa-solid fa-trash"></i>
+      </button>
+    </div>
+  </div>
+
+  <div class="settings-section">
+    <div class="card-title-sm">À PROPOS</div>
+    <div class="small text-muted">
+      <div class="mb-2"><strong>Version:</strong> 9.5.0 PWA</div>
+      <div class="mb-2"><strong>Développeur:</strong> GlycoTrack Team</div>
+      <div class="mb-2"><strong>Licence:</strong> Gratuit 100%</div>
+      <div class="mb-2"><strong>Stockage:</strong> LocalStorage (Hors-ligne)</div>
+    </div>
+  </div>
+</div>
+
+<!-- BOTTOM NAV -->
+<div class="bottom-nav">
+  <button class="nav-item active" onclick="navTo('home')">
+    <i class="fa-solid fa-house"></i> Accueil
+  </button>
+  <button class="nav-item" onclick="navTo('log')">
+    <i class="fa-solid fa-list"></i> Journal
+  </button>
+  
+  <button class="nav-fab" onclick="openNewEntryModal('Matin')">
+    <i class="fa-solid fa-plus"></i>
+  </button>
+  
+  <button class="nav-item" onclick="navTo('stats')">
+    <i class="fa-solid fa-chart-pie"></i> Stats
+  </button>
+  <button class="nav-item" onclick="navTo('settings')">
+    <i class="fa-solid fa-gear"></i> Réglages
+  </button>
+</div>
+
+<!-- ENTRY MODAL (reuse + extend original fields) -->
+<div class="modal fade" id="entryModal" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title fw-bold" id="modalTitle">Nouvelle Entrée</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <input type="hidden" id="editId">
+        
+        <div class="category-grid">
+          <div class="cat-btn active" onclick="selectCat('Matin')" id="btnCatMatin">
+            <i class="fa-regular fa-sun"></i> Matin
+          </div>
+          <div class="cat-btn" onclick="selectCat('Midi')" id="btnCatMidi">
+            <i class="fa-solid fa-utensils"></i> Midi
+          </div>
+          <div class="cat-btn" onclick="selectCat('Soir')" id="btnCatSoir">
+            <i class="fa-solid fa-moon"></i> Soir
+          </div>
+          <div class="cat-btn" onclick="selectCat('Divers')" id="btnCatDivers">
+            <i class="fa-solid fa-bolt"></i> Divers
+          </div>
+        </div>
+
+        <div class="row g-2 mb-3">
+          <div class="col-7">
+            <label class="input-label">Date</label>
+            <input type="date" id="inDate" class="form-control-custom">
+            <div class="validation-error" id="errDate">Date invalide</div>
+          </div>
+          <div class="col-5">
+            <label class="input-label">Heure</label>
+            <input type="time" id="inTime" class="form-control-custom">
+          </div>
+        </div>
+
+        <!-- MEDS PANEL FOR MATIN -->
+        <div id="fieldsMatin" class="dyn-med-field">
+          <div class="d-flex justify-content-between align-items-center mb-2">
+            <div><b>Médicaments Matin</b></div>
+            <div>
+              <button type="button" class="btn btn-sm btn-outline-primary" id="addMedBtn_Matin"><i class="fa-solid fa-plus"></i> Ajouter</button>
+            </div>
+          </div>
+          <div id="medList_Matin"></div>
+          <!-- zone utilisée pour sélection dans la création d'entrée -->
+          <div id="medication-fields-Matin" class="mt-2"></div>
+        </div>
+
+        <!-- MEDS PANEL FOR MIDI -->
+        <div id="fieldsMidi" class="dyn-med-field d-none">
+          <div class="d-flex justify-content-between align-items-center mb-2">
+            <div><b>Médicaments Midi</b></div>
+            <div>
+              <button type="button" class="btn btn-sm btn-outline-primary" id="addMedBtn_Midi"><i class="fa-solid fa-plus"></i> Ajouter</button>
+            </div>
+          </div>
+          <div id="medList_Midi"></div>
+          <div id="medication-fields-Midi" class="mt-2"></div>
+        </div>
+
+        <!-- MEDS PANEL FOR SOIR -->
+        <div id="fieldsSoir" class="dyn-med-field d-none">
+          <div class="d-flex justify-content-between align-items-center mb-2">
+            <div><b>Médicaments Soir</b></div>
+            <div>
+              <button type="button" class="btn btn-sm btn-outline-primary" id="addMedBtn_Soir"><i class="fa-solid fa-plus"></i> Ajouter</button>
+            </div>
+          </div>
+          <div id="medList_Soir"></div>
+          <div id="medication-fields-Soir" class="mt-2"></div>
+        </div>
+
+        <!-- MEDS PANEL FOR DIVERS -->
+        <div id="fieldsDivers" class="dyn-med-field d-none">
+          <div class="d-flex justify-content-between align-items-center mb-2">
+            <div><b>Médicaments Divers</b></div>
+            <div>
+              <button type="button" class="btn btn-sm btn-outline-primary" id="addMedBtn_Divers"><i class="fa-solid fa-plus"></i> Ajouter</button>
+            </div>
+          </div>
+          <div id="medList_Divers"></div>
+          <div id="medication-fields-Divers" class="mt-2"></div>
+        </div>
+
+        <div id="fieldsGly" class="mb-3">
+          <label class="input-label">Glycémie (g/L) *</label>
+          <input type="number" step="0.01" id="inGly" class="form-control-custom" placeholder="Ex: 0.95" min="0.2" max="6.0">
+          <div class="validation-error" id="errGly">Glycémie requise (entre 0.2 et 6.0 g/L)</div>
+        </div>
+
+        <div id="fieldsInsuline" class="row g-2 mb-3">
+          <div class="col-6">
+            <label class="input-label text-danger" id="novoLabel">Novorapid (U)</label>
+            <input type="number" id="inNovo" class="form-control-custom" placeholder="Unités" min="0" max="100">
+            <div class="validation-error" id="errNovo">Max 100 unités</div>
+          </div>
+          <div class="col-6" id="grpLantus">
+            <label class="input-label text-primary" id="lantusLabel">Lantus (U)</label>
+            <input type="number" id="inLantus" class="form-control-custom" placeholder="Unités" min="0" max="100">
+            <div class="validation-error" id="errLantus">Max 100 unités</div>
+          </div>
+        </div>
+
+        <div class="mb-3">
+           <label class="input-label">Notes / Repas / Détails</label>
+           <textarea id="inObs" class="form-control-custom" rows="2" placeholder="Pain, sport, menu..." maxlength="500"></textarea>
+           <div class="small text-muted text-end"><span id="obsCount">0</span>/500</div>
+        </div>
+        
+        <div id="btnDeleteArea" class="d-none text-center mb-2">
+           <button class="btn btn-sm text-danger" onclick="deleteCurrentEntry()">
+             <i class="fa-solid fa-trash"></i> Supprimer cette entrée
+           </button>
+        </div>
+
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-light w-50 py-3 rounded-4 fw-bold me-2" data-bs-dismiss="modal">Annuler</button>
+        <button class="btn btn-primary w-50 py-3 rounded-4 fw-bold shadow" onclick="saveEntry()">Valider</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- GLOBAL MED EDIT MODAL (ADD / MODIFY MED) -->
+<div class="modal fade" id="medEditModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header bg-primary text-white">
+        <h5 class="modal-title" id="medEditModalTitle">Modifier médicament</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <input type="hidden" id="medEditCat">
+        <input type="hidden" id="medEditId">
+        <div class="mb-3">
+          <label class="form-label">Nom</label>
+          <input id="medEditName" class="form-control" placeholder="Nom du médicament">
+        </div>
+        <div class="mb-3">
+          <label class="form-label">Dose</label>
+          <input id="medEditDose" class="form-control" placeholder="Ex: 25 µg / 500 mg">
+        </div>
+        <div class="form-check">
+          <input class="form-check-input" type="checkbox" id="medEditTaken">
+          <label class="form-check-label" for="medEditTaken">Pris</label>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+        <button class="btn btn-primary" id="medEditSaveBtn">Enregistrer</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<input type="file" id="importInput" accept=".json" style="display:none" onchange="handleImport(event)">
+
+<!-- libs -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
+<!-- app module (modulaire ES) -->
+<script type="module" src="js/app.module.js"></script>
+
+</body>
+</html>

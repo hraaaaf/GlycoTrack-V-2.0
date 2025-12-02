@@ -1,0 +1,343 @@
+/* =======================================================
+   THEME MATERIAL YOU + iOS SOFT UI
+   ======================================================= */
+
+/* ---------- Couleurs dynamiques type Material You ---------- */
+:root {
+  --primary: #6d5dfc;
+  --primary-soft: rgba(109, 93, 252, 0.12);
+  --primary-glow: rgba(109, 93, 252, 0.22);
+
+  --success: #1fc97d;
+  --danger: #ff4d6d;
+  --warning: #ffb02e;
+
+  --bg: #f6f7fb;
+  --bg-card: #ffffffdd;
+  --bg-blur: rgba(255, 255, 255, 0.55);
+  --text: #1a1a1c;
+  --text-light: #6d6d74;
+  --border: #e4e6eb;
+  --shadow: rgba(0, 0, 0, 0.06);
+
+  --radius: 18px;
+  --radius-sm: 12px;
+}
+
+[data-theme="dark"] {
+  --primary: #7d8aff;
+  --primary-soft: rgba(125, 138, 255, 0.18);
+  --primary-glow: rgba(125, 138, 255, 0.33);
+
+  --bg: #0f0f11;
+  --bg-card: rgba(32,32,36,0.8);
+  --bg-blur: rgba(32,32,36,0.35);
+  --text: #f6f6f8;
+  --text-light: #aaa;
+  --border: #2a2a2d;
+  --shadow: rgba(0,0,0,0.5);
+}
+
+/* ---------- Body avec effet iOS ---------- */
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+  margin: 0;
+  padding-bottom: 120px;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* =======================================================
+   BUTTONS
+   ======================================================= */
+
+.btn-primary {
+  background: var(--primary);
+  border: none;
+  color: #fff;
+  font-weight: 600;
+  border-radius: var(--radius);
+  padding: 10px 18px;
+  transition: all .2s ease;
+  box-shadow: 0 4px 12px var(--primary-glow);
+}
+
+.btn-primary:hover {
+  background: #584af5;
+}
+
+.btn-outline-danger {
+  border: 2px solid var(--danger);
+  color: var(--danger);
+  border-radius: var(--radius-sm);
+}
+
+.btn-outline-danger:hover {
+  background: var(--danger);
+  color: white;
+}
+
+/* =======================================================
+   CARDS (Soft UI iOS)
+   ======================================================= */
+
+.entry-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 16px;
+  margin-bottom: 16px;
+  box-shadow: 0 4px 14px var(--shadow);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  transition: transform .15s ease;
+}
+
+.entry-card:active {
+  transform: scale(0.98);
+}
+
+.entry-header {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+
+.entry-date {
+  font-weight: 700;
+  font-size: 1.05rem;
+}
+
+/* Badges effet Material You */
+.badge-custom {
+  background: var(--primary-soft);
+  padding: 6px 12px;
+  border-radius: var(--radius-sm);
+  font-weight: 600;
+  color: var(--primary);
+}
+
+.bg-val-ok {
+  background: var(--primary-soft);
+  color: var(--primary);
+}
+
+/* =======================================================
+   MEDICATION PANELS
+   ======================================================= */
+
+.med-panel {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 14px 16px;
+  margin-bottom: 20px;
+  box-shadow: 0 4px 12px var(--shadow);
+  backdrop-filter: blur(16px);
+}
+
+.med-panel-title {
+  font-weight: 700;
+  font-size: 1.15rem;
+  color: var(--primary);
+  margin-bottom: 10px;
+}
+
+/* Medication row */
+.med-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 4px;
+  border-radius: var(--radius-sm);
+  transition: background .2s ease;
+}
+
+.med-row:hover {
+  background: var(--primary-soft);
+}
+
+.med-name {
+  font-weight: 600;
+}
+
+.med-dose {
+  font-size: .85rem;
+  color: var(--text-light);
+}
+
+/* =======================================================
+   NAVIGATION BUTTONS (cats)
+   ======================================================= */
+
+.nav-group-btns {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 15px;
+}
+
+.nav-group-btns button {
+  flex: 1;
+  background: var(--bg-blur);
+  backdrop-filter: blur(16px);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 10px;
+  color: var(--text-light);
+  transition: all .25s ease;
+}
+
+.nav-group-btns button.active {
+  background: var(--primary);
+  color: #fff;
+  border-color: var(--primary);
+  box-shadow: 0 3px 10px var(--primary-glow);
+  transform: scale(1.03);
+}
+
+/* =======================================================
+   TOASTS (iOS floating alerts)
+   ======================================================= */
+
+#toastContainer {
+  position: fixed;
+  bottom: 25px;
+  right: 20px;
+  z-index: 5000;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.custom-toast {
+  background: var(--bg-card);
+  border-radius: var(--radius);
+  padding: 14px 16px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 240px;
+  box-shadow: 0 4px 14px var(--shadow);
+  border-left: 5px solid var(--primary);
+  backdrop-filter: blur(14px);
+  animation: toastIn .25s ease-out;
+}
+
+@keyframes toastIn {
+  from { opacity: 0; transform: translateX(40px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+
+.toast-error { border-left-color: var(--danger); }
+.toast-warning { border-left-color: var(--warning); }
+
+/* =======================================================
+   FLOATING ACTION BUTTON (iOS style)
+   ======================================================= */
+
+.nav-fab {
+  position: fixed;
+  right: 16px;
+  bottom: 90px;
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background: var(--primary);
+  color: white;
+  font-size: 28px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  box-shadow: 0 6px 20px var(--primary-glow);
+  cursor: pointer;
+  transition: transform .25s ease;
+}
+
+.nav-fab:hover {
+  transform: scale(1.07);
+}
+
+/* =======================================================
+   INPUTS iOS
+   ======================================================= */
+
+.form-control, .form-select {
+  border-radius: var(--radius-sm);
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  padding: 10px 12px;
+  color: var(--text);
+}
+
+.form-control:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px var(--primary-soft);
+}
+
+/* =======================================================
+   MODALS iOS / Material You
+   ======================================================= */
+
+.modal-content {
+  background: var(--bg-card);
+  border-radius: 22px;
+  border: none;
+  box-shadow: 0 10px 40px var(--shadow);
+  backdrop-filter: blur(20px);
+}
+
+.modal-header,
+.modal-footer {
+  border: none;
+}
+
+/* =======================================================
+   CHART CONTAINER
+   ======================================================= */
+
+#chartContainer {
+  background: var(--bg-card);
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  height: 240px;
+  padding: 10px;
+  box-shadow: 0 4px 14px var(--shadow);
+  backdrop-filter: blur(16px);
+}
+
+/* =======================================================
+   EMPTY STATE
+   ======================================================= */
+
+.empty-state {
+  text-align: center;
+  padding: 50px 20px;
+  background: var(--bg-card);
+  border-radius: var(--radius);
+  box-shadow: 0 4px 14px var(--shadow);
+  border: 1px solid var(--border);
+}
+
+.empty-state i {
+  font-size: 40px;
+  color: var(--primary);
+  margin-bottom: 12px;
+}
+
+/* =======================================================
+   SCROLLBARS (iOS clean)
+   ======================================================= */
+
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--primary-soft);
+  border-radius: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
